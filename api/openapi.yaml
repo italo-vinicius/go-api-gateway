@@ -1,0 +1,7 @@
+openapi: 3.0.3
+info: {title: go-api-gateway administration API, version: 0.1.0}
+paths:
+  /health/live: {get: {responses: {'200': {description: Process is alive}}}}
+  /health/ready: {get: {responses: {'200': {description: A route has a healthy upstream}, '503': {description: No route is ready}}}}
+  /status: {get: {responses: {'200': {description: Gateway route and upstream status}}}}
+  /metrics: {get: {responses: {'200': {description: Prometheus exposition format}}}}

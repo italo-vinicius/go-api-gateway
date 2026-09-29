@@ -1,0 +1,15 @@
+services:
+  gateway:
+    build: {context: .., dockerfile: deployments/Dockerfile}
+    volumes: ["../configs/go-api-gateway.example.yaml:/etc/go-api-gateway/config.yaml:ro"]
+    ports: ["8080:8080", "9090:9090"]
+    depends_on: [orders-1, orders-2, payments]
+  orders-1:
+    build: {context: .., dockerfile: deployments/Dockerfile, target: mockservice}
+    environment: [MOCK_NAME=orders-1, MOCK_PORT=:3000]
+  orders-2:
+    build: {context: .., dockerfile: deployments/Dockerfile, target: mockservice}
+    environment: [MOCK_NAME=orders-2, MOCK_PORT=:3000]
+  payments:
+    build: {context: .., dockerfile: deployments/Dockerfile, target: mockservice}
+    environment: [MOCK_NAME=payments, MOCK_PORT=:3000]

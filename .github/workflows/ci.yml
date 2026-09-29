@@ -1,0 +1,21 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v6
+        with: {go-version: '1.25.x'}
+      - run: go mod download
+      - run: test -z "$(gofmt -l .)"
+      - run: go vet ./...
+      - uses: golangci/golangci-lint-action@v8
+        with: {version: v2.4.0}
+      - run: go test -race -coverprofile=coverage.out ./...
+      - run: |
+          test "$(go tool cover -func=coverage.out | awk '/^total:/{gsub(/%/, "", $3); print int($3)}')" -ge 80
+      - run: go install golang.org/x/vuln/cmd/govulncheck@latest
+      - run: govulncheck ./...
+      - run: go build ./cmd/...
+      - run: docker build -f deployments/Dockerfile .

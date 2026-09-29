@@ -1,0 +1,29 @@
+server:
+  address: ":8080"
+  read_header_timeout: 5s
+  idle_timeout: 60s
+  shutdown_timeout: 10s
+  max_header_bytes: 1048576
+admin:
+  address: ":9090"
+  enable_pprof: false
+logging: {level: info, format: json}
+routes:
+  - name: orders
+    match: {path_prefix: /orders, strip_prefix: false}
+    upstreams:
+      - {id: orders-1, url: http://orders-1:3000, weight: 1}
+      - {id: orders-2, url: http://orders-2:3000, weight: 1}
+    timeout: 2s
+    retries: {attempts: 2, initial_backoff: 100ms, max_backoff: 500ms, retry_statuses: [502, 503, 504]}
+    rate_limit: {enabled: true, key: ip, requests: 100, burst: 20, window: 1m, max_keys: 10000}
+    circuit_breaker: {failure_threshold: 5, success_threshold: 2, open_timeout: 30s, half_open_max: 1}
+    health_check: {path: /health, interval: 5s, timeout: 1s, unhealthy_threshold: 3, healthy_threshold: 2}
+  - name: payments
+    match: {path_prefix: /payments, strip_prefix: false}
+    upstreams: [{id: payments-1, url: http://payments:3000, weight: 1}]
+    timeout: 2s
+    retries: {attempts: 1, initial_backoff: 100ms, max_backoff: 500ms}
+    rate_limit: {enabled: true, key: header, header: X-API-Key, requests: 50, burst: 10, window: 1m, max_keys: 10000}
+    circuit_breaker: {failure_threshold: 5, success_threshold: 2, open_timeout: 30s, half_open_max: 1}
+    health_check: {path: /health, interval: 5s, timeout: 1s, unhealthy_threshold: 3, healthy_threshold: 2}
