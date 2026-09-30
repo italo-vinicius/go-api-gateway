@@ -20,18 +20,18 @@ type state struct {
 }
 
 func main() {
-	s := &state{name: env("MOCK_NAME", "mock"), latency: duration("MOCK_LATENCY", 0), jitter: duration("MOCK_JITTER", 0), failureRate: floatEnv("MOCK_FAILURE_RATE", 0), failureStatus: intEnv("MOCK_FAILURE_STATUS", 503)}
+	s := &state{name: env("MOCK_NAME", "mock"), latency: duration("MOCK_LATENCY", 0), jitter: duration("MOCK_JITTER", 0), failureRate: floatEnv("MOCK_FAILURE_RATE", 0), failureStatus: intEnv("MOCK_FAILURE_STATUS", http.StatusServiceUnavailable)}
 	s.healthy.Store(true)
 	m := http.NewServeMux()
 	m.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
 		if !s.healthy.Load() {
-			http.Error(w, "unhealthy", 503)
+			http.Error(w, "unhealthy", http.StatusServiceUnavailable)
 			return
 		}
 		w.WriteHeader(200)
 	})
 	m.HandleFunc("/info", func(w http.ResponseWriter, _ *http.Request) {
-		json.NewEncoder(w).Encode(map[string]any{"name": s.name, "healthy": s.healthy.Load()})
+		_ = json.NewEncoder(w).Encode(map[string]any{"name": s.name, "healthy": s.healthy.Load()})
 	})
 	m.HandleFunc("/admin/failure-mode", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -61,7 +61,7 @@ func main() {
 			}
 			s.latency = d
 		}
-		json.NewEncoder(w).Encode(map[string]any{"ok": true})
+		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true})
 	})
 	m.HandleFunc("/", s.response)
 	addr := env("MOCK_PORT", ":3000")
@@ -85,7 +85,7 @@ func (s *state) response(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-Mock-Instance", s.name)
-	json.NewEncoder(w).Encode(map[string]any{"instance": s.name, "method": r.Method, "path": r.URL.Path, "query": r.URL.Query()})
+	_ = json.NewEncoder(w).Encode(map[string]any{"instance": s.name, "method": r.Method, "path": r.URL.Path, "query": r.URL.Query()})
 }
 func env(k, d string) string {
 	if v := os.Getenv(k); v != "" {

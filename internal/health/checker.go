@@ -65,6 +65,6 @@ func (c *Checker) check(parent context.Context, h config.HealthCheckConfig, u *u
 		u.HealthResult(false, time.Now())
 		return
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	u.HealthResult(resp.StatusCode >= 200 && resp.StatusCode < 400, time.Now())
 }

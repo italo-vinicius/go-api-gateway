@@ -21,7 +21,9 @@ func TestGatewayForwardsRequest(t *testing.T) {
 			return
 		}
 		b, _ := io.ReadAll(r.Body)
-		w.Write(append([]byte(r.Method+":"), b...))
+		if _, err := w.Write(append([]byte(r.Method+":"), b...)); err != nil {
+			t.Errorf("write response: %v", err)
+		}
 	}))
 	defer up.Close()
 	cfg := &config.Config{Routes: []config.RouteConfig{{Name: "api", Match: config.MatchConfig{PathPrefix: "/api"}, Upstreams: []config.UpstreamConfig{{ID: "one", URL: up.URL}}, Timeout: time.Second, Retries: config.RetryConfig{Attempts: 1, InitialBackoff: time.Millisecond, MaxBackoff: time.Millisecond}, CircuitBreaker: config.CircuitBreakerConfig{FailureThreshold: 2, SuccessThreshold: 1, OpenTimeout: time.Second, HalfOpenMax: 1}, HealthCheck: config.HealthCheckConfig{Path: "/", Interval: time.Second, Timeout: time.Second, HealthyThreshold: 1, UnhealthyThreshold: 1}}}}

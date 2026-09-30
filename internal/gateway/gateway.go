@@ -91,7 +91,7 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		previous = u.ID
 		resp, e := g.call(ctx, r, u, target, id)
 		if e == nil && !resilience.RetryableStatus(resp.StatusCode, route.Retries.RetryStatuses) {
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 			copyResponse(w, resp, id)
 			u.Result(resp.StatusCode < 500, time.Now())
 			g.metrics.UpstreamRequests.WithLabelValues(route.Name, u.ID, strconv.Itoa(resp.StatusCode)).Inc()
@@ -99,7 +99,7 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if resp != nil {
-			resp.Body.Close()
+			_ = resp.Body.Close()
 			g.metrics.UpstreamRequests.WithLabelValues(route.Name, u.ID, strconv.Itoa(resp.StatusCode)).Inc()
 			u.Result(false, time.Now())
 		} else {

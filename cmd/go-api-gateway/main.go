@@ -81,7 +81,7 @@ func loadCommand() *cobra.Command {
 						fail.Add(1)
 					}
 					if r != nil {
-						r.Body.Close()
+						_ = r.Body.Close()
 					}
 				}
 			}()

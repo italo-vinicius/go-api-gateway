@@ -9,7 +9,9 @@ import (
 
 func TestLoadAndAggregateValidation(t *testing.T) {
 	p := filepath.Join(t.TempDir(), "bad.yaml")
-	os.WriteFile(p, []byte("server: {address: ':1'}\nadmin: {address: ':1'}\nroutes:\n- name: x\n  match: {path_prefix: bad}\n  upstreams: []\n  timeout: 0s\n  retries: {attempts: 99}\n"), 0600)
+	if err := os.WriteFile(p, []byte("server: {address: ':1'}\nadmin: {address: ':1'}\nroutes:\n- name: x\n  match: {path_prefix: bad}\n  upstreams: []\n  timeout: 0s\n  retries: {attempts: 99}\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
 	_, e := Load(p)
 	if e == nil {
 		t.Fatal("expected error")
