@@ -1,8 +1,10 @@
 # go-api-gateway
 
-A Go HTTP gateway and reverse proxy focused on safe traffic control, resilience, and operational visibility.
+Um gateway HTTP e proxy reverso em Go, focado em controle de tráfego seguro, resiliência e visibilidade operacional.
 
-## Quick start
+## Início rápido
+
+Pré-requisitos: Docker com Docker Compose para a demonstração em containers, ou Go 1.25+ instalado e disponível no `PATH` para execução local. Confirme com `go version`.
 
 ```bash
 docker compose -f deployments/docker-compose.yml up --build
@@ -10,24 +12,24 @@ curl http://localhost:8080/orders/42
 curl http://localhost:9090/status
 ```
 
-The public gateway and the administrative API intentionally listen on different ports. Local execution uses `go run ./cmd/go-api-gateway serve --config configs/go-api-gateway.example.yaml`.
+O gateway público e a API administrativa usam portas separadas intencionalmente. Para executar localmente, use `go run ./cmd/go-api-gateway serve --config configs/go-api-gateway.example.yaml` após instalar o Go. Com Docker, aguarde os containers iniciarem antes de chamar os endpoints com `curl`.
 
-## What it does
+## Funcionalidades
 
-- YAML-defined prefix routes, with longest-prefix precedence and optional stripping.
-- Concurrent round-robin among healthy upstreams.
-- Per-route total timeouts, safe-method retries with capped exponential jitter, and per-upstream circuit breakers.
-- Active health checks, local token-bucket rate limiting by client IP or header, structured JSON errors, request IDs, and Prometheus metrics.
-- `/health/live`, `/health/ready`, `/status`, `/metrics`, and optional admin-only pprof endpoints.
+- Rotas por prefixo definidas em YAML, com precedência pelo prefixo mais longo e remoção opcional do prefixo.
+- Round-robin concorrente entre upstreams saudáveis.
+- Timeouts totais por rota, retries para métodos seguros com backoff exponencial limitado e jitter, além de circuit breakers por upstream.
+- Health checks ativos, rate limiting local com token bucket por IP ou header, erros JSON estruturados, request IDs e métricas Prometheus.
+- Endpoints `/health/live`, `/health/ready`, `/status`, `/metrics` e pprof opcional, restrito à porta administrativa.
 
-## Architecture
+## Arquitetura
 
-`request ID → route match → rate limit → healthy/circuit-eligible upstream → attempt/retry → metrics and log`
+`request ID → correspondência de rota → rate limit → upstream saudável e elegível pelo circuito → tentativa/retry → métricas e logs`
 
-The implementation uses the standard `net/http` stack to make HTTP cancellation, transports, and forwarding explicit. Health checks detect background availability; circuit breakers react to live request failures. Retries are intentionally restricted to `GET`, `HEAD`, and `OPTIONS` to avoid duplicating side effects. The timeout covers every retry and backoff.
+A implementação usa a biblioteca padrão `net/http` para tornar explícitos o cancelamento HTTP, os transports e os headers de encaminhamento. Health checks observam disponibilidade em segundo plano; circuit breakers reagem a falhas de tráfego real. Retries são deliberadamente limitados a `GET`, `HEAD` e `OPTIONS`, evitando a repetição de efeitos colaterais. O timeout abrange todas as tentativas e backoffs.
 
-## Operations and trade-offs
+## Operação e trade-offs
 
-Rate-limit state is in-process, so a distributed limit needs shared storage such as Redis. There is no database or service discovery by design. TLS is expected to terminate at an edge proxy. This is a learning-quality gateway, not a replacement for production platforms such as Envoy, Kong, or Traefik.
+O estado do rate limit fica no processo; para um limite distribuído, seria necessário armazenamento compartilhado, como Redis. Por decisão de escopo, não há banco de dados nem descoberta de serviços. TLS deve ser terminado por um proxy de borda. Este projeto prioriza estudo e portfólio, não substitui soluções de produção como Envoy, Kong ou Traefik.
 
-Run `go test ./...`, `go test -race ./...`, and `go test -bench=. -benchmem ./...`. The mock services expose `/health`, `/info`, and a demo-only `POST /admin/failure-mode` endpoint. `bash scripts/demo.sh` shows routing, limits, status, and metrics after Compose is running.
+Execute `go test ./...`, `go test -race ./...` e `go test -bench=. -benchmem ./...`. Os serviços simulados expõem `/health`, `/info` e o endpoint de demonstração `POST /admin/failure-mode`. Depois de iniciar o Compose, `bash scripts/demo.sh` demonstra roteamento, limites, status e métricas.

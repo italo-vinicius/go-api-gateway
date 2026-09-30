@@ -5,7 +5,7 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/go-api-gateway ./cmd/go-api-gateway
 RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/mockservice ./cmd/mockservice
-FROM gcr.io/distroless/static-debian12:nonroot
+FROM gcr.io/distroless/static-debian12:nonroot AS gateway
 COPY --from=build /out/go-api-gateway /go-api-gateway
 EXPOSE 8080 9090
 USER nonroot:nonroot
