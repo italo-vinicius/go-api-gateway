@@ -2,13 +2,6 @@ package gateway
 
 import (
 	"context"
-	"github.com/google/uuid"
-	"github.com/italo/go-api-gateway/internal/balancer"
-	"github.com/italo/go-api-gateway/internal/config"
-	"github.com/italo/go-api-gateway/internal/observability"
-	"github.com/italo/go-api-gateway/internal/ratelimit"
-	"github.com/italo/go-api-gateway/internal/resilience"
-	"github.com/italo/go-api-gateway/internal/upstream"
 	"io"
 	"log/slog"
 	"net"
@@ -16,8 +9,15 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/italo/go-api-gateway/internal/balancer"
+	"github.com/italo/go-api-gateway/internal/config"
+	"github.com/italo/go-api-gateway/internal/observability"
+	"github.com/italo/go-api-gateway/internal/ratelimit"
+	"github.com/italo/go-api-gateway/internal/resilience"
+	"github.com/italo/go-api-gateway/internal/upstream"
 )
 
 type Gateway struct {
@@ -28,7 +28,6 @@ type Gateway struct {
 	logger   *slog.Logger
 	metrics  *observability.Metrics
 	limits   map[string]*ratelimit.Limiter
-	mu       sync.Mutex
 }
 
 func New(cfg *config.Config, logger *slog.Logger, metrics *observability.Metrics) (*Gateway, error) {

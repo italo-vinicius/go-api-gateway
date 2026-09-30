@@ -47,7 +47,8 @@ func (c *CircuitBreaker) Allow(now time.Time) bool {
 func (c *CircuitBreaker) Success(now time.Time) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if c.state == HalfOpen {
+	switch c.state {
+	case HalfOpen:
 		c.probes--
 		c.successes++
 		if c.successes >= c.successThreshold {
@@ -55,7 +56,7 @@ func (c *CircuitBreaker) Success(now time.Time) {
 			c.failures = 0
 			c.successes = 0
 		}
-	} else if c.state == Closed {
+	case Closed:
 		c.failures = 0
 	}
 }

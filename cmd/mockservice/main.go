@@ -35,7 +35,7 @@ func main() {
 	})
 	m.HandleFunc("/admin/failure-mode", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			http.Error(w, "method", 405)
+			http.Error(w, "method", http.StatusMethodNotAllowed)
 			return
 		}
 		var x struct {
