@@ -81,6 +81,9 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var previous string
 	for attempt := 0; attempt < attempts; attempt++ {
 		items := g.registry.Eligible(route.Name, time.Now(), previous)
+		if len(items) == 0 && previous != "" {
+			items = g.registry.Eligible(route.Name, time.Now(), "")
+		}
 		u, e := g.balancer.Select(items)
 		if e != nil {
 			g.finish(route.Name, r.Method, 503)

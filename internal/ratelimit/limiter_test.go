@@ -27,3 +27,18 @@ func BenchmarkLimiter(b *testing.B) {
 		l.Allow("client", time.Now())
 	}
 }
+
+func TestLimiterCleansInactiveBucketsAndCapsKeys(t *testing.T) {
+	now := time.Now()
+	l := New(1, 1, time.Second, 1)
+	if ok, _ := l.Allow("old", now); !ok {
+		t.Fatal("old key rejected")
+	}
+	if ok, _ := l.Allow("new", now); ok {
+		t.Fatal("key cap ignored")
+	}
+	l.Cleanup(now.Add(3 * time.Second))
+	if ok, _ := l.Allow("new", now.Add(3*time.Second)); !ok {
+		t.Fatal("inactive key was not removed")
+	}
+}

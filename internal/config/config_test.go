@@ -23,3 +23,18 @@ func TestLoadAndAggregateValidation(t *testing.T) {
 		}
 	}
 }
+
+func TestLoadValidConfiguration(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "good.yaml")
+	data := "server: {address: ':8080'}\nadmin: {address: ':9090'}\nroutes:\n- name: api\n  match: {path_prefix: /api}\n  upstreams: [{id: upstream, url: http://example.com}]\n"
+	if err := os.WriteFile(p, []byte(data), 0600); err != nil {
+		t.Fatal(err)
+	}
+	c, err := Load(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.Routes[0].Timeout <= 0 || c.Routes[0].Retries.Attempts != 1 {
+		t.Fatalf("defaults were not applied")
+	}
+}
